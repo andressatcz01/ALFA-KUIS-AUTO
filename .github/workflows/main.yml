@@ -1,4 +1,3 @@
-
 name: Build ALFA KUIS AUTO APK
 
 on:
@@ -24,9 +23,11 @@ jobs:
 
       - name: Siapkan Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Instal Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        with:
+          cmdline-tools-version: 12266719
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: true
+          packages: platform-tools "platforms;android-35" "build-tools;35.0.0"
 
       - name: Ekstrak project
         run: |
@@ -47,4 +48,3 @@ jobs:
         with:
           name: ALFA-KUIS-AUTO-APK
           path: extracted/AlfaKuisAuto/app/build/outputs/apk/debug/app-debug.apk
-          
