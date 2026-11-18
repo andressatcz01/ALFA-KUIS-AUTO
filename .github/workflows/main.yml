@@ -1,0 +1,50 @@
+
+name: Build ALFA KUIS AUTO APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ALFA_KUIS_AUTO_Project.zip'
+      - '.github/workflows/main.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ambil source code
+        uses: actions/checkout@v4
+
+      - name: Siapkan Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Siapkan Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instal Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Ekstrak project
+        run: |
+          unzip -q ALFA_KUIS_AUTO_Project.zip -d extracted
+
+      - name: Siapkan Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build APK
+        run: |
+          cd extracted/AlfaKuisAuto
+          gradle assembleDebug
+
+      - name: Simpan APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALFA-KUIS-AUTO-APK
+          path: extracted/AlfaKuisAuto/app/build/outputs/apk/debug/app-debug.apk
+          
