@@ -19,46 +19,24 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: 17
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-
-      - name: Extract project
-        run: unzip -q ALFA_KUIS_AUTO_Project.zip -d extracted
-
-      - name: Fix Java Kotlin compatibility
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("extracted/AlfaKuisAuto/app/build.gradle.kts")
-          s = p.read_text()
-          s = s.replace(
-              'android {',
-              '''android {
-                  compileOptions {
-                      sourceCompatibility = JavaVersion.VERSION_17
-                      targetCompatibility = JavaVersion.VERSION_17
-                  }'''
-          )
-          p.write_text(s)
-          PY
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-35"
+          sdkmanager "build-tools;35.0.0"
 
       - name: Build APK
         run: |
-          cd extracted/AlfaKuisAuto
-          gradle assembleDebug
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ALFA-KUIS-AUTO-APK
-          path: extracted/AlfaKuisAuto/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
