@@ -1,49 +1,53 @@
+
 name: Build ALFA KUIS AUTO APK
 
 on:
   workflow_dispatch:
   push:
-    paths:
-      - 'ALFA_KUIS_AUTO_Project.zip'
-      - '.github/workflows/main.yml'
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ambil source code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Siapkan Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Siapkan Android SDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 12266719
-          accept-android-sdk-licenses: true
-          log-accepted-android-sdk-licenses: true
-          packages: platform-tools
 
-      - name: Instal Platform dan Build Tools
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Extract project
+        run: unzip -q ALFA_KUIS_AUTO_Project.zip -d extracted
+
+      - name: Fix Java Kotlin compatibility
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("extracted/AlfaKuisAuto/app/build.gradle.kts")
+          s = p.read_text()
+          s = s.replace(
+              'android {',
+              '''android {
+                  compileOptions {
+                      sourceCompatibility = JavaVersion.VERSION_17
+                      targetCompatibility = JavaVersion.VERSION_17
+                  }'''
+          )
+          p.write_text(s)
+          PY
 
-      - name: Ekstrak project
-        run: |
-          unzip -q ALFA_KUIS_AUTO_Project.zip -d extracted
-
-      - name: Samakan Java ke 17
-        run: |
-          cd extracted/AlfaKuisAuto
-          find . -name "build.gradle*" -type f -exec sed -i 's/VERSION_1_8/VERSION_17/g; s/JavaVersion.VERSION_1_8/JavaVersion.VERSION_17/g; s/jvmTarget = "1.8"/jvmTarget = "17"/g; s/jvmTarget = .1.8./jvmTarget = "17"/g; s/sourceCompatibility = 1.8/sourceCompatibility = 17/g; s/targetCompatibility = 1.8/targetCompatibility = 17/g; s/"1.8"/"17"/g' {} +
-
-      - name: Siapkan Gradle
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
@@ -53,7 +57,7 @@ jobs:
           cd extracted/AlfaKuisAuto
           gradle assembleDebug
 
-      - name: Simpan APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ALFA-KUIS-AUTO-APK
